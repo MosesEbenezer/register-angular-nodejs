@@ -34,6 +34,7 @@ exports.register = async (req, res, next) => {
 		await user.save();
 
 		return res.status(200).json({
+      success: true,
 			measage: 'User successfully saved',
 		});
 	} catch (e) {
@@ -52,12 +53,7 @@ exports.findUser = async (req, res, next) => {
 		});
 
 		if (user) {
-			return res.status(200).json({
-				message: 'User found',
-				data: {
-					user,
-				},
-			});
+			return res.status(200).send(user);
 		} else {
 			return res.status(404).json({
 				message: 'No user with this email found',
@@ -71,37 +67,50 @@ exports.findUser = async (req, res, next) => {
 };
 
 exports.updateUser = async (req, res, next) => {
-
 	try {
 
-  const userID = req.params.userID
+  const userUpdateRequest = Object.keys(req.body)
+  const allowedFields = [
+  'first_name',
+  'last_name',
+  'user_name',
+  'email',
+  'phone',
+  'street',
+  'town',
+  'state',
+  'lga',
+  'country'
+  ]
 
-  const user = await UserModel.findOne({
-    _id: userID
-  }).exec()
+  const isValidOperation = userUpdateRequest.every((requiredField) =>
+    allowedFields.includes(requiredField),
+  )
 
-  if(!user) {
-    return res.status(404).json({
-      message: 'No user with this id found',
-    });
-  }
+  if (isValidOperation) {
+    const user = await UserModel.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      },
+		).exec();
 
-		if (req.body.first_name) user.first_name = req.body.first_name;
-		if (req.body.last_name)	user.last_name = req.body.last_name;
-		if (req.body.email) user.email = req.body.email;
-		if (req.body.phone)	user.phone = req.body.phone;
-		if (req.body.password) user.password = req.body.password;
-		if (req.body.street) user.street = req.body.street;
-		if (req.body.town) user.town = req.body.town;
-		if (req.body.state) user.state = req.body.state;
-		if (req.body.lga) user.lga = req.body.lga;
-		if (req.body.country) user.country = req.body.country;
+		if (!user) {
+			return res.status(404).json({
+				message: 'No user with this id found',
+			});
+		}
 
 		await user.save();
-		res.json({
+		return res.json({
 			success: true,
-			message: 'user details successfully updated',
+      message: 'user details successfully updated',
+      user
 		});
+  }
+
 	} catch (e) {
 		return res.status(500).json({
 			message: 'An error occured ' + e,
@@ -111,7 +120,7 @@ exports.updateUser = async (req, res, next) => {
 
 exports.deleteUser = async (req, res, next) => {
 	try {
-		const userID = req.params.userID;
+		const userID = req.params.id;
 
 		const deletedUser = await UserModel.findByIdAndDelete({
 			_id: userID,
@@ -119,6 +128,7 @@ exports.deleteUser = async (req, res, next) => {
 
 		if (deletedUser) {
 			return res.status(200).json({
+        success: true,
 				message: 'User successfully deleted',
 			});
 		}
@@ -131,19 +141,15 @@ exports.deleteUser = async (req, res, next) => {
 
 exports.getAllRegisteredUsers = async (req, res, next) => {
 	try {
-		const users = await UserModel.find().exec();
+		let users = await UserModel.find().exec();
 
 		let usersArray = [];
 
-		users.forEach((user) => {
-			usersArray.push(user);
-		});
-
-		return res.status(200).json({
-			data: {
-				usersArray,
-			},
-		});
+		users.forEach((users) => {
+			usersArray.push(users);
+    });
+    
+		return res.status(200).send(users);
 	} catch (e) {
 		return res.status(500).json({
 			message: 'An error occured ' + e,

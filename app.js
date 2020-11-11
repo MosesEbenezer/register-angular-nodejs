@@ -26,9 +26,10 @@ const mainRoutes = require('./routes/registration');
 
 app.use('/', mainRoutes);
 
-const atlasUrl = process.env.atlasUrl;
+// const atlasUrl = process.env.atlasUrl;
+const atlasUrl = `mongodb+srv://eaziUser:db_EaziUser@cluster0.iu3il.mongodb.net/izzyfuel?retryWrites=true&w=majority`
 
-mongoose.connect(atlasUrl, { useNewUrlParser: true, useUnifiedTopology: true }, (err) => {
+mongoose.connect(atlasUrl, { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false }, (err) => {
     if(err) {
         console.log('Not connected to the database: ' + err);
         
